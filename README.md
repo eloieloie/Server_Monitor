@@ -106,21 +106,49 @@ npm install
 
 ## Running the Application
 
-### Start Backend Server
+### Option 1: Start Both Servers Automatically (Recommended)
+
+**Using Batch Script (Windows):**
+```bash
+# From the project root directory
+start-servers.bat
+```
+
+**Using PowerShell Script (Windows):**
+```powershell
+# From the project root directory
+.\start-servers.ps1
+```
+
+**Using npm (from frontend directory):**
+```bash
+cd frontend
+npm run dev
+```
+
+This will automatically start:
+- Frontend at `http://localhost:5173`
+- Backend at `http://localhost:8000`
+
+Both servers will run concurrently and you can stop them both with `Ctrl+C`.
+
+### Option 2: Start Servers Manually
+
+#### Start Backend Server
 
 ```bash
 cd backend
 source venv/bin/activate  # or venv\Scripts\activate on Windows
-python app.py
+python -m uvicorn app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Backend will run on `http://localhost:8000`
 
-### Start Frontend Development Server
+#### Start Frontend Development Server
 
 ```bash
 cd frontend
-npm run dev
+npm run dev:frontend-only
 ```
 
 Frontend will run on `http://localhost:5173`
