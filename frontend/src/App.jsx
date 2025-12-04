@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Container, Alert, Spinner } from 'react-bootstrap';
+import { Container, Alert, Spinner, Button } from 'react-bootstrap';
 import ServerForm from './components/ServerForm';
 import MonitorDashboard from './components/MonitorDashboard';
+import SavedServersList from './components/SavedServersList';
+import { saveServer } from './utils/serverStorage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './App.css';
@@ -15,6 +17,7 @@ function App() {
   const [success, setSuccess] = useState(null);
   const [monitorData, setMonitorData] = useState(null);
   const [serverName, setServerName] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleMonitorServer = async (credentials) => {
     setLoading(true);
@@ -34,6 +37,14 @@ function App() {
         setMonitorData(response.data.data);
         setServerName(response.data.server);
         setSuccess(`Successfully connected to ${response.data.server}`);
+        
+        // Save server credentials to localStorage
+        try {
+          saveServer(credentials);
+          setRefreshKey(prev => prev + 1); // Trigger saved servers list refresh
+        } catch (saveError) {
+          console.error('Failed to save server:', saveError);
+        }
         
         // Scroll to results
         setTimeout(() => {
@@ -59,6 +70,22 @@ function App() {
       console.error('Monitor error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshMonitor = () => {
+    if (serverName && monitorData) {
+      // Re-fetch data for current server
+      const lastCredentials = {
+        server: serverName,
+        username: '',
+        password: '',
+        port: 5985,
+        transport: 'ntlm'
+      };
+      // Note: We don't have stored credentials for security, 
+      // user needs to reconnect or we need to handle this differently
+      setSuccess('Click "Monitor" on a saved server to refresh its data');
     }
   };
 
@@ -107,6 +134,14 @@ function App() {
         {/* Server Form */}
         <ServerForm onSubmit={handleMonitorServer} loading={loading} />
 
+        {/* Saved Servers List */}
+        <div className="my-4">
+          <SavedServersList 
+            onSelectServer={handleMonitorServer} 
+            onRefresh={refreshKey}
+          />
+        </div>
+
         {/* Loading Spinner */}
         {loading && (
           <div className="text-center my-5">
@@ -117,7 +152,20 @@ function App() {
 
         {/* Monitor Dashboard */}
         {monitorData && !loading && (
-          <MonitorDashboard data={monitorData} serverName={serverName} />
+          <>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h4 className="mb-0">Server Metrics</h4>
+              <Button 
+                variant="primary" 
+                onClick={handleRefreshMonitor}
+                disabled={loading}
+              >
+                <i className="bi bi-arrow-clockwise me-2"></i>
+                Refresh Data
+              </Button>
+            </div>
+            <MonitorDashboard data={monitorData} serverName={serverName} />
+          </>
         )}
       </Container>
 

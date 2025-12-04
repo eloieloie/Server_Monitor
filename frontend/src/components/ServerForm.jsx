@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, Button, Card, Row, Col, Alert } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
-function ServerForm({ onSubmit, loading }) {
+function ServerForm({ onSubmit, loading, initialData }) {
   const [formData, setFormData] = useState({
     server: '',
     username: '',
@@ -12,6 +12,19 @@ function ServerForm({ onSubmit, loading }) {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Update form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        server: initialData.server || '',
+        username: initialData.username || '',
+        password: initialData.password || '',
+        port: String(initialData.port || '5985'),
+        transport: initialData.transport || 'ntlm'
+      });
+    }
+  }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -198,11 +211,19 @@ function ServerForm({ onSubmit, loading }) {
 
 ServerForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
+  initialData: PropTypes.shape({
+    server: PropTypes.string,
+    username: PropTypes.string,
+    password: PropTypes.string,
+    port: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    transport: PropTypes.string
+  })
 };
 
 ServerForm.defaultProps = {
-  loading: false
+  loading: false,
+  initialData: null
 };
 
 export default ServerForm;
